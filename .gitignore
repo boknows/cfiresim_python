@@ -1,0 +1,5 @@
+.ipynb_checkpoints
+.ideas
+
+*.ipynb
+*.sqlite3
