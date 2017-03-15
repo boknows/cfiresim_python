@@ -1,5 +1,6 @@
 .ipynb_checkpoints
-.ideas
+.idea
+*.pyc
 
 *.ipynb
 *.sqlite3
