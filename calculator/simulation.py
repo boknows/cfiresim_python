@@ -19,3 +19,4 @@ def run_simulation(form):
         cycle_length = form.cleaned_data['retirement_end_year'] - form.cleaned_data['retirement_year'] + 1
 
     print cycle_length, len(market_data)
+    
