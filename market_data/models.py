@@ -32,6 +32,8 @@ class DataPoint(models.Model):
 
     data_date = models.DateField(null=True, blank=True)
     s_and_p_composite = models.CharField(max_length=64, null=True, blank=True)
+    yearly_equities_growth = models.CharField(max_length=64, null=True, blank=True)
+    monthly_equities_growth = models.CharField(max_length=64, null=True, blank=True)
     dividend = models.CharField(max_length=64, null=True, blank=True)
     earnings = models.CharField(max_length=64, null=True, blank=True)
     cpi = models.CharField(max_length=64, null=True, blank=True)
