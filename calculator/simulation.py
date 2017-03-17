@@ -189,8 +189,14 @@ def calculate_market_gains(inputs, cycle, segment_num):
     segment.equities['end'] = segment.equities['start'] + segment.equities['growth'] + segment.dividends['growth']
     #Bonds
     segment.bonds['start'] = (allocation['bonds'] * portfolio)
-    segment_fixed_income = D(segment.data_point.long_interest_rate)/100
-    segment.bonds['growth'] = segment.bonds['start'] * segment_fixed_income
+    bonds_this_year = D(segment.data_point.long_interest_rate) / 100
+    if len(cycle.sim)-1 == segment_num:
+        segment.bonds['growth'] = segment.bonds['start'] * bonds_this_year
+    else:
+        bonds_next_year = D(cycle.sim[segment_num+1].data_point.long_interest_rate)/100
+        bonds_growth1 = bonds_this_year * ((1 - D((math.pow((1 + bonds_next_year), -9)))) / bonds_next_year)
+        bonds_growth2 = (1 / D((math.pow((1 + bonds_next_year), 9))) - 1)
+        segment.bonds['growth'] = segment.bonds['start'] * (bonds_growth1 + bonds_growth2 + bonds_this_year)
     segment.bonds['end'] = segment.bonds['start'] + segment.bonds['growth']
     #Gold  TODO: Fill in DB and call value heret
     segment.gold['start'] = (allocation['gold'] * portfolio)

@@ -35,15 +35,14 @@ class SimulatorTestCase(TestCase):
         if self.form.is_valid():
             results = run_simulation(self.form)
             cumulative_inflation = round(results.sim[-1].cumulative_inflation, 8)
-            baseline = round(0.634028892455858, 8)
+            baseline = round(0.63358892, 8)
             self.assertEqual(cumulative_inflation, baseline)
 
     def test_end_spending_default(self):
         if self.form.is_valid():
             results = run_simulation(self.form)
-            pprint(results.sim[0].__dict__)
             spending = round(results.sim[-1].spending, 2)
-            baseline = round(25361.16, 2)
+            baseline = round(25343.56, 2)
             self.assertEqual(spending, baseline)
 
     def test_end_inflation_adjusted_spending_default(self):
@@ -57,7 +56,7 @@ class SimulatorTestCase(TestCase):
         if self.form.is_valid():
             results = run_simulation(self.form)
             portfolio = round(results.sim[-1].portfolio['end'], 2)
-            baseline = 3131777.21
+            baseline = 3289028.87
             self.assertEqual(portfolio, baseline)
 
     def test_equities_and_bonds_calculations(self):
@@ -66,7 +65,7 @@ class SimulatorTestCase(TestCase):
             equities_growth = round(results.sim[0].equities['growth'], 2)
             bonds_growth = round(results.sim[0].bonds['growth'], 2)
             baseline_equities_growth = 68108.11
-            baseline_bonds_growth = 12768.00
+            baseline_bonds_growth = 12096.46
             self.assertEqual(equities_growth, baseline_equities_growth)
             self.assertEqual(bonds_growth, baseline_bonds_growth)
 
