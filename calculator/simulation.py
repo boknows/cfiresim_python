@@ -28,19 +28,28 @@ class Input:
 
 
 class Cycle:
-    def __init__(self, range_start, range_end, data_points):
-        self.range_start = range_start
-        self.range_end = range_end
+    def __init__(self, data_points):
+        self.range_start = data_points[0].date
+        self.range_end = data_points[-1].date
         self.start_CPI = data_points[0].cpi
         self.years = relativedelta(self.range_end, self.range_start).years + 1
         self.sim = []
 
         for i in range (0, self.years):
-            self.sim.append(Segment(self.range_start + relativedelta(years=i), self.start_CPI, data_points[i]))
+            data_point = data_points[i]
+            self.sim.append(Segment(
+                date=self.range_start + relativedelta(years=i),
+                start_CPI=self.start_CPI,
+                yearly_equities_growth=data_point.yearly_equities_growth,
+                cpi=data_point.cpi,
+                dividend=data_point.dividend,
+                s_and_p_composite=data_point.s_and_p_composite,
+                long_interest_rate=data_point.long_interest_rate
+            ))
 
 
 class Segment:
-    def __init__(self, date, start_CPI, data_point):
+    def __init__(self, date, start_CPI, yearly_equities_growth, cpi, dividend, s_and_p_composite, long_interest_rate):
         self.start_CPI = D(start_CPI)
         self.date = date
         self.portfolio = {
@@ -78,24 +87,52 @@ class Segment:
         }
         self.fees = None
 
-        self.yearly_equities_growth = D(data_point.yearly_equities_growth)
-        self.cumulative_inflation = 1 + (D(data_point.cpi) - self.start_CPI) / self.start_CPI
+        self.yearly_equities_growth = D(yearly_equities_growth)
+        self.cumulative_inflation = 1 + (D(cpi) - self.start_CPI) / self.start_CPI
         self.sum_of_adjustments = None
-        self.cpi = data_point.cpi
-        self.dividend = data_point.dividend
-        self.s_and_p_composite = data_point.s_and_p_composite
-        self.long_interest_rate = data_point.long_interest_rate
+        self.cpi = cpi
+        self.dividend = dividend
+        self.s_and_p_composite = s_and_p_composite
+        self.long_interest_rate = long_interest_rate
+
+class Data():
+    def __init__(self,
+                 date,
+                 cpi,
+                 yearly_equities_growth,
+                 s_and_p_composite,
+                 long_interest_rate,
+                 dividend,
+                 ):
+        self.date = date
+        self.cpi = cpi
+        self.yearly_equities_growth = yearly_equities_growth
+        self.s_and_p_composite = s_and_p_composite
+        self.long_interest_rate = long_interest_rate
+        self.dividend = dividend
 
 
 def run_simulation(form):
-    market_data = DataPoint.objects.all().yearly()
-    all_data = DataPoint.objects.all().yearly()
+    market_data_lookup = list(DataPoint.objects.all().yearly())
+    market_data = []
+    for m in market_data_lookup:
+        market_data.append(
+            Data(
+                date=m.data_date,
+                cpi=m.cpi,
+                yearly_equities_growth=m.yearly_equities_growth,
+                s_and_p_composite=m.s_and_p_composite,
+                long_interest_rate=m.long_interest_rate,
+                dividend=m.dividend
+            )
+        )
     simulation_cycles = []
     inputs = Input(form)
     if form.is_valid:
         cycle_length = inputs.retirement_end_year - inputs.retirement_year + 1
-        first_year_of_data = market_data.first().data_date.year
-        last_year_of_data = market_data.last().data_date.year
+        pprint(market_data[0].__dict__)
+        first_year_of_data = market_data[0].date.year
+        last_year_of_data = market_data[-1].date.year
         number_of_cycles = last_year_of_data - first_year_of_data - cycle_length
 
         previous_data_points = []
@@ -103,14 +140,14 @@ def run_simulation(form):
             if len(previous_data_points) < cycle_length:
                 previous_data_points.append(m)
                 continue
-            simulation_cycles.append(Cycle(
-                range_start=previous_data_points[0].data_date,
-                range_end=previous_data_points[-1].data_date,
-                data_points=previous_data_points
-            ))
+            simulation_cycles.append(Cycle(previous_data_points))
             if len(previous_data_points) == cycle_length:
                 previous_data_points.pop(0)
             previous_data_points.append(m)
+        # for i in range(0, 29):
+        #     previous_data_points.append(market_data[i])
+        # simulation_cycles.append(Cycle(previous_data_points))
+
 
         for cycle in simulation_cycles:
             previous_segment = None
@@ -195,7 +232,8 @@ def calculate_market_gains(inputs, cycle, segment_num):
     if len(cycle.sim)-1 == segment_num:
         segment.bonds['growth'] = segment.bonds['start'] * bonds_this_year
     else:
-        bonds_next_year = D(DataPoint.objects.get(data_date=segment.date+relativedelta(years=1)).long_interest_rate)/100
+        bonds_next_year = D(cycle.sim[segment_num+1].long_interest_rate)/100
+        bonds_next_year = 1
         bonds_growth1 = bonds_this_year * ((1 - D((math.pow((1 + bonds_next_year), -9)))) / bonds_next_year)
         bonds_growth2 = (1 / D((math.pow((1 + bonds_next_year), 9))) - 1)
         segment.bonds['growth'] = segment.bonds['start'] * (bonds_growth1 + bonds_growth2 + bonds_this_year)
