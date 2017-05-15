@@ -1,0 +1,45 @@
+<html>
+<body>
+<canvas id="myChart" width="700" height="700"></canvas>
+<script src="http://www.chartjs.org/assets/Chart.js"></script>
+<script>
+    var data = {
+        labels: ["1871", "", "", ""],
+        datasets: []
+    };
+
+    for (var i = 1875; i < 2015; i = i+5){
+        labels.push(str(i));
+        labels.push("");
+        labels.push("");
+        labels.push("");
+        labels.push("");
+    }
+    labels.push("");
+    labels.push("");
+
+    {% for cycle in output %}
+    datasets.push({
+        label: "Data1",
+        fillColor: "rgba(0,0,0,0)",
+        strokeColor: "rgba(220,220,220,1)",
+        pointColor: "rgba(200,122,20,1)",
+        data: {{ cycle }}
+    })
+    {% endfor %}
+
+    var options={
+
+    };
+
+
+    //Get context with jQuery - using jQuery's .get() method.
+    var ctx = $("#myChart").get(0).getContext("2d");
+
+
+new Chart(ctx).Line(data,options);
+
+</script>
+
+</body>
+</html>

@@ -2,6 +2,7 @@ from pprint import pprint
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal as D
 from market_data.models import DataPoint
+from datetime import datetime
 import math
 
 
@@ -130,7 +131,6 @@ def run_simulation(form):
     inputs = Input(form)
     if form.is_valid:
         cycle_length = inputs.retirement_end_year - inputs.retirement_year + 1
-        pprint(market_data[0].__dict__)
         first_year_of_data = market_data[0].date.year
         last_year_of_data = market_data[-1].date.year
         number_of_cycles = last_year_of_data - first_year_of_data - cycle_length
@@ -144,14 +144,10 @@ def run_simulation(form):
             if len(previous_data_points) == cycle_length:
                 previous_data_points.pop(0)
             previous_data_points.append(m)
-        # for i in range(0, 29):
-        #     previous_data_points.append(market_data[i])
-        # simulation_cycles.append(Cycle(previous_data_points))
-
 
         for cycle in simulation_cycles:
-            previous_segment = None
             for i in range(0, len(cycle.sim)):
+                calculate_adjustments(inputs=inputs, segment=cycle.sim[i], segment_num=i)
                 calculate_starting_portfolio(inputs=inputs,
                                              cycle=cycle,
                                              segment_num=i
@@ -159,7 +155,27 @@ def run_simulation(form):
                 calculate_market_gains(inputs=inputs, cycle=cycle, segment_num=i)
                 calculate_ending_portfolio(inputs=inputs, segment=cycle.sim[i])
 
-        return simulation_cycles[0]
+        chart_data = []
+        spending_data = []
+        interval = len(simulation_cycles)
+        cycle_length = len(simulation_cycles[0].sim)
+        sim_length = interval + cycle_length - 1
+
+        for i in range(0, interval):
+            chart_data.append([])
+            spending_data.append([])
+            for j in range(0, sim_length):
+                chart_data[i].append("null")
+                spending_data[i].append("null")
+
+        first_year = simulation_cycles[0].sim[0].date
+        for i in range(0, len(simulation_cycles)):
+            for j in range(0, cycle_length):
+                index = relativedelta(simulation_cycles[i].sim[j].date, first_year).years
+                chart_data[i][index] = simulation_cycles[i].sim[j].portfolio['inflation_adjusted_end']
+
+
+        return chart_data
 
 
 def calculate_starting_portfolio(inputs, cycle, segment_num):
@@ -168,10 +184,10 @@ def calculate_starting_portfolio(inputs, cycle, segment_num):
     spending = calculate_spending(inputs, segment, first_segment)
     if cycle.sim[segment_num].date == cycle.range_start:
         cycle.sim[segment_num].portfolio['start'] = inputs.portfolio_value - \
-                                                    inputs.initial_yearly_spending
+                                                    inputs.initial_yearly_spending + segment.sum_of_adjustments
     else:
         cycle.sim[segment_num].portfolio['start'] = cycle.sim[segment_num-1].portfolio['end'] - \
-                                                    spending
+                                                    spending + segment.sum_of_adjustments
 
 def calculate_ending_portfolio(inputs, segment):
     fees_incurred = (segment.portfolio['start'] +
@@ -202,15 +218,13 @@ def calculate_ending_portfolio(inputs, segment):
 
 
 def calculate_spending(inputs, segment, first_segment):
-    spending = 0
     if first_segment:
         spending = inputs.initial_yearly_spending
     else:
-        spending = inputs.initial_yearly_spending
         spending = inputs.initial_yearly_spending * segment.cumulative_inflation
 
-    segment.spending = D(spending)
-    segment.inflation_adjusted_spending = D(spending / segment.cumulative_inflation)
+    segment.spending = round(D(spending),2)
+    segment.inflation_adjusted_spending = round(D(spending / segment.cumulative_inflation),2)
     return spending
 
 def calculate_market_gains(inputs, cycle, segment_num):
@@ -233,7 +247,6 @@ def calculate_market_gains(inputs, cycle, segment_num):
         segment.bonds['growth'] = segment.bonds['start'] * bonds_this_year
     else:
         bonds_next_year = D(cycle.sim[segment_num+1].long_interest_rate)/100
-        bonds_next_year = 1
         bonds_growth1 = bonds_this_year * ((1 - D((math.pow((1 + bonds_next_year), -9)))) / bonds_next_year)
         bonds_growth2 = (1 / D((math.pow((1 + bonds_next_year), 9))) - 1)
         segment.bonds['growth'] = segment.bonds['start'] * (bonds_growth1 + bonds_growth2 + bonds_this_year)
@@ -246,6 +259,18 @@ def calculate_market_gains(inputs, cycle, segment_num):
     segment.cash['start'] = (allocation['cash'] * portfolio)
     segment.cash['growth'] = segment.cash['start'] * inputs.growth_of_cash
     segment.cash['end'] = segment.cash['start'] + segment.cash['growth']
+
+
+def calculate_adjustments(inputs, segment, segment_num):
+    current_year = datetime.now().year
+    ss_and_pension_adjustments = 0
+    sum_of_adjustments = 0
+
+    if (segment_num >= (inputs.ss_start_year - current_year)) and (segment_num <= (inputs.ss_end_year - current_year)):
+        ss_and_pension_adjustments += (inputs.ss_annual_value * segment.cumulative_inflation)
+
+    sum_of_adjustments += ss_and_pension_adjustments
+    segment.sum_of_adjustments = sum_of_adjustments
 
 
 def calculate_allocation(inputs):
