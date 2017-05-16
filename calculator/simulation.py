@@ -172,7 +172,7 @@ def run_simulation(form):
         for i in range(0, len(simulation_cycles)):
             for j in range(0, cycle_length):
                 index = relativedelta(simulation_cycles[i].sim[j].date, first_year).years
-                chart_data[i][index] = simulation_cycles[i].sim[j].portfolio['inflation_adjusted_end']
+                chart_data[i][index] = int(simulation_cycles[i].sim[j].portfolio['inflation_adjusted_end'])
 
 
         return chart_data

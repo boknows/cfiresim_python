@@ -3,60 +3,7 @@
 <html>
 <body>
 {% if output %}
-    {% for cycle in output %}
-        Year: {{ cycle.date.year }}<br>
-        Cumulative Inflation: {{ cycle.cumulative_inflation }}<br>
-        Inf. Adj. Spending: {{ cycle.inflation_adjusted_spending|floatformat:2|intcomma }}<br>
-        Spending: {{ cycle.spending|floatformat:2|intcomma }}<br>
-        Sum of Adjustments: {{ cycle.sum_of_adjustments|floatformat:2|intcomma }}<br>
-        Portfolio:<ul>
-            <li>End: {{ cycle.portfolio.end|floatformat:2|intcomma }}</li>
-            <li>inflation_adjusted_end: {{ cycle.portfolio.inflation_adjusted_end|floatformat:2|intcomma }}</li>
-            <li>start: {{ cycle.portfolio.start|floatformat:2|intcomma }}</li>
-            <li>inflation_adjusted_start: {{ cycle.portfolio.inflation_adjusted_start|floatformat:2|intcomma }}</li>
-            <li>Fees: {{ cycle.fees|floatformat:2|intcomma }}</li>
-        </ul><br>
-        <table>
-            <thead>
-                <th>Type</th>
-                <th>Start</th>
-                <th>End</th>
-                <th>Growth</th>
-                <th>Val</th>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Equities</td>
-                    <td>{{ cycle.equities.start|floatformat:2|intcomma }}</td>
-                    <td>{{ cycle.equities.end|floatformat:2|intcomma }}</td>
-                    <td>{{ cycle.equities.growth|floatformat:2|intcomma }}</td>
-                    <td>{{ cycle.equities.val|floatformat:2|intcomma }}</td>
-                </tr>
-                <tr>
-                    <td>Bonds</td>
-                    <td>{{ cycle.bonds.start|floatformat:2|intcomma }}</td>
-                    <td>{{ cycle.bonds.end|floatformat:2|intcomma }}</td>
-                    <td>{{ cycle.bonds.growth|floatformat:2|intcomma }}</td>
-                    <td>{{ cycle.bonds.val|floatformat:2|intcomma }}</td>
-                </tr>
-                <tr>
-                    <td>Gold</td>
-                    <td>{{ cycle.gold.start|floatformat:2|intcomma }}</td>
-                    <td>{{ cycle.gold.end|floatformat:2|intcomma }}</td>
-                    <td>{{ cycle.gold.growth|floatformat:2|intcomma }}</td>
-                    <td>{{ cycle.gold.val|floatformat:2|intcomma }}</td>
-                </tr>
-                <tr>
-                    <td>Cash</td>
-                    <td>{{ cycle.cash.start|floatformat:2|intcomma }}</td>
-                    <td>{{ cycle.cash.end|floatformat:2|intcomma }}</td>
-                    <td>{{ cycle.cash.growth|floatformat:2|intcomma }}</td>
-                    <td>{{ cycle.cash.val|floatformat:2|intcomma }}</td>
-                </tr>
-            </tbody>
-        </table><br>
-        <br>
-    {% endfor %}
+    {% include 'output.html' %}
 {% else %}
 <form method="post">
     {% csrf_token %}

@@ -1,45 +1,73 @@
-<html>
-<body>
-<canvas id="myChart" width="700" height="700"></canvas>
-<script src="http://www.chartjs.org/assets/Chart.js"></script>
+YAAAA
+<canvas id="myChart" width="600" height="400"></canvas>
+<script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.bundle.min.js"></script>
 <script>
+    function rainbowColors(length, maxLength)
+        {
+            var i = (length * 255 / maxLength);
+            var r = Math.round(Math.sin(0.024 * i + 0) * 127 + 128);
+            var g = Math.round(Math.sin(0.024 * i + 2) * 127 + 128);
+            var b = Math.round(Math.sin(0.024 * i + 4) * 127 + 128);
+            return 'rgb(' + r + ',' + g + ',' + b + ')';
+        }
+
+    var colors = [];
+    for (var i=0; i<{{ cycles }}; i++){
+        colors.push(rainbowColors(i,{{ cycles }}));
+    }
+
     var data = {
         labels: ["1871", "", "", ""],
         datasets: []
     };
 
     for (var i = 1875; i < 2015; i = i+5){
-        labels.push(str(i));
-        labels.push("");
-        labels.push("");
-        labels.push("");
-        labels.push("");
+        data.labels.push(i.toString());
+        data.labels.push("");
+        data.labels.push("");
+        data.labels.push("");
+        data.labels.push("");
     }
-    labels.push("");
-    labels.push("");
+    data.labels.push("");
+    data.labels.push("");
 
+    var dataset = 0;
     {% for cycle in output %}
-    datasets.push({
+    data.datasets.push({
         label: "Data1",
-        fillColor: "rgba(0,0,0,0)",
-        strokeColor: "rgba(220,220,220,1)",
-        pointColor: "rgba(200,122,20,1)",
-        data: {{ cycle }}
+        type: "line",
+        fill: false,
+        borderColor: colors[dataset],
+        highlightFill: "rgba(220,220,220,0.75)",
+        highlightStroke: "rgba(220,220,220,1)",
+        pointRadius: 0,
+        data: [{% for item in cycle %}
+            {% if item == "null" %}
+            null,
+            {% else %}
+            {{ item }},
+            {% endif %}
+            {%  endfor %}]
     })
+    dataset++;
     {% endfor %}
 
-    var options={
-
-    };
-
-
-    //Get context with jQuery - using jQuery's .get() method.
-    var ctx = $("#myChart").get(0).getContext("2d");
-
-
-new Chart(ctx).Line(data,options);
+    var ctx = document.getElementById("myChart");
+    var myChart = new Chart(ctx, {
+        type: 'line',
+        data: data,
+        options: {
+            legend: {
+                display: false
+            },
+            hover: {
+                mode: 'dataset',
+            },
+        }
+    });
 
 </script>
-
-</body>
-</html>
